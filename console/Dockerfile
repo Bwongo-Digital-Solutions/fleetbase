@@ -24,14 +24,20 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # Copy over .npmrc if applicable
 COPY .npmr[c] ./
 
-# Install global dependencies
-RUN npm install -g ember-cli pnpm 
+# Install pnpm with retries for transient registry/network interruptions.
+# ember-cli is already a project devDependency and is invoked from node_modules
+# by pnpm build, so installing a second global copy is unnecessary.
+RUN npm config set fetch-retries 5 \
+    && npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000 \
+    && npm config set fetch-timeout 600000 \
+    && npm install -g pnpm@11.0.9 --no-audit --no-fund --prefer-online
 
 # Install git
 RUN apk update && apk add git openssh-client
 
 # Trust GitHub's RSA host key
-RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Install app dependencies
 RUN pnpm install --frozen-lockfile
