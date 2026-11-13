@@ -22,7 +22,13 @@ ENV PATH=/root/.pnpm/bin:$PATH
 ARG DISABLE_FLEETBASE_ATTRIBUTION=false
 ENV DISABLE_FLEETBASE_ATTRIBUTION=$DISABLE_FLEETBASE_ATTRIBUTION
 
-RUN npm install -g ember-cli pnpm
+# ember-cli is provided by the project's devDependencies; only install the
+# pinned package manager globally. Retry settings handle transient npm timeouts.
+RUN npm config set fetch-retries 5 \
+    && npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000 \
+    && npm config set fetch-timeout 600000 \
+    && npm install -g pnpm@11.0.9 --no-audit --no-fund --prefer-online
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY .npmr[c] ./
