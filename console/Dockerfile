@@ -30,8 +30,10 @@ RUN npm install -g ember-cli pnpm
 # Install git
 RUN apk update && apk add git openssh-client
 
-# Trust GitHub's RSA host key
-RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+# Trust GitHub's SSH host key
+RUN install -d -m 0700 ~/.ssh \
+    && ssh-keyscan -H github.com >> ~/.ssh/known_hosts \
+    && chmod 0600 ~/.ssh/known_hosts
 
 # Install app dependencies
 RUN pnpm install --frozen-lockfile
